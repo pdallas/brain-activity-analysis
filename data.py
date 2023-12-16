@@ -280,6 +280,6 @@ print_dataset_help()
 root = f"{DATA_PREFIX}/Intra/train/"
 all_files = get_all_filenames(root)
 for file_name in all_files:
-    dat = DataFile(filename=file_name, root=root, downsample_rate=10)
+    dat = DataFile(filename=file_name, root_dir=root, downsample_rate=10)
     print(dat.get_matrix().shape)
     dat.remove()
