@@ -53,12 +53,13 @@ class DataFile:
         >>> Output: Subject: 105923, Chunk: 1, Goal: Goal.REST, Goal ID: 1, Matrix: (248, 35624)
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename, root_dir):
         """
         Constructor
 
         Args:
             filename (str): filename
+            root_dir (str): root directory
 
         """
         items = filename.split('_')
@@ -67,8 +68,7 @@ class DataFile:
         label = ("_").join(items[0:len(items)-2])
         self.goal = decode_task_to_goal(label)
         self.goal_id = self.goal.value
-        self.matrix = get_dataset_values(
-            f"{DATA_PREFIX}/Intra/train/{filename}")
+        self.matrix = get_dataset_values(root_dir + filename)
 
     def __str__(self):
         """
@@ -254,9 +254,11 @@ def get_all_filenames(directory):
     """
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
-all_files = get_all_filenames(f"{DATA_PREFIX}/Intra/train")
+
+root = f"{DATA_PREFIX}/Intra/train/"
+all_files = get_all_filenames(root)
 for file_name in all_files:
-    dat = DataFile(file_name)
+    dat = DataFile(file_name, root)
     pass
     dat.remove()
 
