@@ -47,19 +47,22 @@ class DataFile:
         __str__(self): to string
         get_matrix(self): get matrix
         get_goals(self): get goals
+        remove(self): remove the object from memory
+        downsample(self, rate): downsample the matrix, select every rate-th row
 
     Examples:
         >>> DataFile("rest_105923_1.h5")
         >>> Output: Subject: 105923, Chunk: 1, Goal: Goal.REST, Goal ID: 1, Matrix: (248, 35624)
     """
 
-    def __init__(self, filename, root_dir):
+    def __init__(self, filename, root_dir, downsample_rate=1):
         """
         Constructor
 
         Args:
             filename (str): filename
             root_dir (str): root directory
+            downsample_rate (int): downsample rate (default: 1) -> Use every row
 
         """
         items = filename.split('_')
@@ -69,6 +72,7 @@ class DataFile:
         self.goal = decode_task_to_goal(label)
         self.goal_id = self.goal.value
         self.matrix = get_dataset_values(root_dir + filename)
+        self.matrix = self.downsample(downsample_rate)
 
     def __str__(self):
         """
@@ -110,6 +114,22 @@ class DataFile:
 
         """
         del self
+
+    def downsample(self, rate):
+        """
+        Downsample the matrix, select every rate-th row
+
+        Args:
+            rate (int): rate
+
+        Returns:
+            np.ndarray: downsampled matrix
+
+        """
+        temp = [line[::rate] for line in self.matrix]
+        return np.array(temp)
+
+        # raise NotImplementedError("Check GitHub issue")
 
 
 def decode_task_to_goal(string):
@@ -255,13 +275,11 @@ def get_all_filenames(directory):
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
+print_dataset_help()
+
 root = f"{DATA_PREFIX}/Intra/train/"
 all_files = get_all_filenames(root)
 for file_name in all_files:
-    dat = DataFile(file_name, root)
-    pass
+    dat = DataFile(filename=file_name, root_dir=root, downsample_rate=10)
+    print(dat.get_matrix().shape)
     dat.remove()
-
-    # matrix = get_dataset_values(filename_path)
-    # print(type(matrix))
-    # print(matrix.shape)
