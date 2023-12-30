@@ -51,6 +51,7 @@ class DataFile:
         get_goals(self): get goals
         remove(self): remove the object from memory
         downsample(self, rate): downsample the matrix, select every rate-th row
+        normalize(self): normalize the matrix
 
     Examples:
         >>> DataFile("rest_105923_1.h5")
@@ -133,7 +134,6 @@ class DataFile:
         temp = [line[::rate] for line in self.matrix]
         return np.array(temp)
 
-        # raise NotImplementedError("Check GitHub issue")
 
     def normalize(self):
         """
