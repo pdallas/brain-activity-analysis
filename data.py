@@ -2,6 +2,8 @@ import h5py
 import os
 from enum import Enum
 import numpy as np
+from sklearn.preprocessing import StandardScaler
+
 import pretty_errors
 
 DATA_PREFIX = "data/Final Project data"
@@ -55,7 +57,7 @@ class DataFile:
         >>> Output: Subject: 105923, Chunk: 1, Goal: Goal.REST, Goal ID: 1, Matrix: (248, 35624)
     """
 
-    def __init__(self, filename, root_dir, downsample_rate=1):
+    def __init__(self, filename, root_dir, downsample_rate=1, normalize=True):
         """
         Constructor
 
@@ -72,6 +74,8 @@ class DataFile:
         self.goal = decode_task_to_goal(label)
         self.goal_id = self.goal.value
         self.matrix = get_dataset_values(root_dir + filename)
+        if normalize:
+            self.matrix = self.normalize()
         self.matrix = self.downsample(downsample_rate)
 
     def __str__(self):
@@ -131,6 +135,19 @@ class DataFile:
 
         # raise NotImplementedError("Check GitHub issue")
 
+    def normalize(self):
+        """
+        Normalize the matrix
+
+        Returns:
+            np.ndarray: normalized matrix
+
+        """
+        scaler = StandardScaler()
+        scaler.fit(self.matrix)
+        matrix = scaler.transform(self.matrix)
+
+        return matrix
 
 def decode_task_to_goal(string):
     """
@@ -275,11 +292,18 @@ def get_all_filenames(directory):
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
-print_dataset_help()
+# print_dataset_help()
 
-root = f"{DATA_PREFIX}/Intra/train/"
-all_files = get_all_filenames(root)
+train_root = f"{DATA_PREFIX}/Intra/train/"
+test_root = f"{DATA_PREFIX}/Intra/test/"
+all_files = get_all_filenames(train_root)
+datasets = []   
 for file_name in all_files:
-    dat = DataFile(filename=file_name, root_dir=root, downsample_rate=10)
-    print(dat.get_matrix().shape)
-    dat.remove()
+    dat = DataFile(file_name, train_root)
+    datasets.append(dat)
+
+    # matrix = get_dataset_values(filename_path)
+    # print(type(matrix))
+    # print(matrix.shape)
+
+print(datasets[0].get_matrix())
