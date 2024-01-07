@@ -296,14 +296,4 @@ def get_all_filenames(directory):
 
 train_root = f"{DATA_PREFIX}/Intra/train/"
 test_root = f"{DATA_PREFIX}/Intra/test/"
-all_files = get_all_filenames(train_root)
-datasets = []   
-for file_name in all_files:
-    dat = DataFile(file_name, train_root)
-    datasets.append(dat)
 
-    # matrix = get_dataset_values(filename_path)
-    # print(type(matrix))
-    # print(matrix.shape)
-
-print(datasets[0].get_matrix())
