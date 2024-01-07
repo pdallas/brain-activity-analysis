@@ -2,6 +2,8 @@ import h5py
 import os
 from enum import Enum
 import numpy as np
+from sklearn.preprocessing import StandardScaler
+
 import pretty_errors
 
 DATA_PREFIX = "data/Final Project data"
@@ -49,13 +51,14 @@ class DataFile:
         get_goals(self): get goals
         remove(self): remove the object from memory
         downsample(self, rate): downsample the matrix, select every rate-th row
+        normalize(self): normalize the matrix
 
     Examples:
         >>> DataFile("rest_105923_1.h5")
         >>> Output: Subject: 105923, Chunk: 1, Goal: Goal.REST, Goal ID: 1, Matrix: (248, 35624)
     """
 
-    def __init__(self, filename, root_dir, downsample_rate=1):
+    def __init__(self, filename, root_dir, downsample_rate=1, normalize=True):
         """
         Constructor
 
@@ -72,6 +75,8 @@ class DataFile:
         self.goal = decode_task_to_goal(label)
         self.goal_id = self.goal.value
         self.matrix = get_dataset_values(root_dir + filename)
+        if normalize:
+            self.matrix = self.normalize()
         self.matrix = self.downsample(downsample_rate)
 
     def __str__(self):
@@ -129,8 +134,20 @@ class DataFile:
         temp = [line[::rate] for line in self.matrix]
         return np.array(temp)
 
-        # raise NotImplementedError("Check GitHub issue")
 
+    def normalize(self):
+        """
+        Normalize the matrix
+
+        Returns:
+            np.ndarray: normalized matrix
+
+        """
+        scaler = StandardScaler()
+        scaler.fit(self.matrix)
+        matrix = scaler.transform(self.matrix)
+
+        return matrix
 
 def decode_task_to_goal(string):
     """
@@ -277,9 +294,6 @@ def get_all_filenames(directory):
 
 # print_dataset_help()
 
-# root = f"{DATA_PREFIX}/Intra/train/"
-# all_files = get_all_filenames(root)
-# for file_name in all_files:
-#     dat = DataFile(filename=file_name, root_dir=root, downsample_rate=10)
-#     print(dat.get_matrix().shape)
-#     dat.remove()
+train_root = f"{DATA_PREFIX}/Intra/train/"
+test_root = f"{DATA_PREFIX}/Intra/test/"
+
