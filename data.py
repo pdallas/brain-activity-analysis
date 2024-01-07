@@ -275,11 +275,11 @@ def get_all_filenames(directory):
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 
-print_dataset_help()
+# print_dataset_help()
 
-root = f"{DATA_PREFIX}/Intra/train/"
-all_files = get_all_filenames(root)
-for file_name in all_files:
-    dat = DataFile(filename=file_name, root_dir=root, downsample_rate=10)
-    print(dat.get_matrix().shape)
-    dat.remove()
+# root = f"{DATA_PREFIX}/Intra/train/"
+# all_files = get_all_filenames(root)
+# for file_name in all_files:
+#     dat = DataFile(filename=file_name, root_dir=root, downsample_rate=10)
+#     print(dat.get_matrix().shape)
+#     dat.remove()
