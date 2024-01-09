@@ -25,10 +25,10 @@ class Goal(Enum):
         >>> Goal.REST.value
         >>> Output: 1
     """
-    REST = 1
-    MATH_AND_STORY = 2
-    WORKING_MEMORY = 3
-    MOTOR = 4
+    REST = [1, 0, 0, 0]
+    MATH_AND_STORY = [0, 1, 0, 0]
+    WORKING_MEMORY = [0, 0, 1, 0]
+    MOTOR = [0, 0, 0, 1]
 
 
 class DataFile:
@@ -134,7 +134,6 @@ class DataFile:
         temp = [line[::rate] for line in self.matrix]
         return np.array(temp)
 
-
     def normalize(self):
         """
         Normalize the matrix
@@ -148,6 +147,7 @@ class DataFile:
         matrix = scaler.transform(self.matrix)
 
         return matrix
+
 
 def decode_task_to_goal(string):
     """
@@ -296,4 +296,3 @@ def get_all_filenames(directory):
 
 train_root = f"{DATA_PREFIX}/Intra/train/"
 test_root = f"{DATA_PREFIX}/Intra/test/"
-
