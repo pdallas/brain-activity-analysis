@@ -6,15 +6,26 @@ import pretty_errors
 from data import *
 from tools import *
 
-DOWNSAMPLE = 1
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--mode', required=True,
+                    choices=['Intra', 'Cross'], help='Mode to run the script in')
+parser.add_argument('--downsample', type=int,
+                    default=1, help='Downsample rate')
+
+
+args = parser.parse_args()
+MODE: str = args.mode
+DOWNSAMPLE: int = args.downsample
+
 EPOCHS = 10
 BATCH_SIZE = 1
 X_train, y_train = [], []
 
-root = f"{DATA_PREFIX}/Intra/train/"
+root = f"{DATA_PREFIX}/{MODE}/train/"
 all_files = get_all_filenames(root)
 all_files = re_order(all_files)  # We re order the files to avoid overfitting
-
 
 for file_name in all_files:
     dat = DataFile(filename=file_name, root_dir=root,
@@ -80,4 +91,4 @@ history = model.fit(X_train, y_train, epochs=EPOCHS,
 # Call the plot function to plot the loss and accuracy (as of now plots are shown, not saved)
 plot(history.history, save=False, show=True, name=f"cnn_model")
 
-save_model(model, f"cnn_model.h5")
+save_model(model, f"{MODE.lower()}_{DOWNSAMPLE}_cnn_model.h5")
