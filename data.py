@@ -1,8 +1,11 @@
-import h5py
-import os
 from enum import Enum
+import h5py
 import numpy as np
-import pretty_errors
+import os
+try:
+    import pretty_errors
+except ImportError:
+    pass
 
 DATA_PREFIX = "data/Final Project data"
 
@@ -14,19 +17,19 @@ class Goal(Enum):
     Purpose: Keep the labeling consistent and easy to read/change
 
     Attributes:
-        REST (int): rest goal
-        MATH_AND_STORY (int): math and story goal
-        WORKING_MEMORY (int): working memory goal
-        MOTOR (int): motor goal 
+        REST (list): rest goal
+        MATH_AND_STORY (list): math and story goal
+        WORKING_MEMORY (list): working memory goal
+        MOTOR (list): motor goal 
 
     Examples:
         >>> Goal.REST.value
-        >>> Output: 1
+        >>> Output: [1, 0, 0, 0]
     """
-    REST = 1
-    MATH_AND_STORY = 2
-    WORKING_MEMORY = 3
-    MOTOR = 4
+    REST = [1, 0, 0, 0]
+    MATH_AND_STORY = [0, 1, 0, 0]
+    WORKING_MEMORY = [0, 0, 1, 0]
+    MOTOR = [0, 0, 0, 1]
 
 
 class DataFile:
@@ -39,14 +42,14 @@ class DataFile:
         subject_id (str): subject id
         chunk_id (str): chunk id
         goal (Goal): goal
-        goal_id (int): goal id
         matrix (np.ndarray): matrix
 
     Methods:
         __init__(self, filename): constructor
         __str__(self): to string
         get_matrix(self): get matrix
-        get_goals(self): get goals
+        get_goals(self): get goal value
+        get_goal_name(self): get goal name
         remove(self): remove the object from memory
         downsample(self, rate): downsample the matrix, select every rate-th row
 
@@ -55,13 +58,14 @@ class DataFile:
         >>> Output: Subject: 105923, Chunk: 1, Goal: Goal.REST, Goal ID: 1, Matrix: (248, 35624)
     """
 
-    def __init__(self, filename, root_dir, downsample_rate=1):
+    def __init__(self, filename, root_dir, scaler=None, downsample_rate=1):
         """
         Constructor
 
         Args:
             filename (str): filename
             root_dir (str): root directory
+            scaler (StandardScaler): scaler (default: None)
             downsample_rate (int): downsample rate (default: 1) -> Use every row
 
         """
@@ -70,9 +74,10 @@ class DataFile:
         self.chunk_id = items[-1].split('.')[0]
         label = ("_").join(items[0:len(items)-2])
         self.goal = decode_task_to_goal(label)
-        self.goal_id = self.goal.value
-        self.matrix = get_dataset_values(root_dir + filename)
+        self.matrix = get_dataset_values(root_dir + filename).T
         self.matrix = self.downsample(downsample_rate)
+        if scaler is not None:
+            scaler.partial_fit(self.matrix)
 
     def __str__(self):
         """
@@ -82,10 +87,10 @@ class DataFile:
             str: string representation of the object
 
         Examples:
-            >>> DataFile("rest_105923_1.h5")
-            >>> Output: Subject: 105923, Chunk: 1, Goal: Goal.REST, Goal ID: 1, Matrix: (248, 35624)
+            >>> DataFile("rest_105923_1.h5", root_dir="data/Final Project data/Intra/train/")
+            >>> Subject: 105923, Chunk: 1, Goal: Goal.REST, Goal Value: [1, 0, 0, 0], Matrix: (35624, 248)
         """
-        return f"Subject: {self.subject_id}, Chunk: {self.chunk_id}, Goal: {self.goal}, Goal ID: {self.goal_id}, Matrix: {self.matrix.shape}"
+        return f"Subject: {self.subject_id}, Chunk: {self.chunk_id}, Goal: {self.goal}, Goal Value: {self.goal.value}, Matrix: {self.matrix.shape}"
 
     def get_matrix(self):
         """
@@ -97,16 +102,23 @@ class DataFile:
         """
         return self.matrix
 
-    def get_goals(self):
+    def get_goal(self):
         """
-        Get the goals/label of the dataset file
+        Get the goal/label value of the dataset file
 
         Returns:
-            np.ndarray: goals
+            Goal: goal value
         """
+        return self.goal.value
 
-        arr = [self.goal_id] * self.matrix.shape[1]
-        return np.array(arr)
+    def get_goal_name(self):
+        """
+        Get the goal/label name of the dataset file
+
+        Returns:
+            Goal: goal name
+        """
+        return self.goal.name
 
     def remove(self):
         """
@@ -126,10 +138,9 @@ class DataFile:
             np.ndarray: downsampled matrix
 
         """
-        temp = [line[::rate] for line in self.matrix]
-        return np.array(temp)
+        temp = [line[::rate] for line in self.matrix.T]
 
-        # raise NotImplementedError("Check GitHub issue")
+        return np.array(temp).T
 
 
 def decode_task_to_goal(string):
@@ -250,11 +261,12 @@ def print_dataset_help():
     print('This number has no particular meaning (splitted files) are easier to handle in terms of memory management). The folder “Intra” contains the files of 1 subject only.')
     print('In the folder “Cross”, 2 subjects are contained in the train folder while the 3 test folders contain different subjects')
     print('from the ones contained in the train folder.  As seen in the section above, each file is represented by a matrix of shape 248 x 35624.')
-    print('The number of rows, 248,corresponds to the number of magnetometer sensors placed on the human scalp.The number of columns, 35624, corresponds to the time steps of a recording.')
+    print('The number of rows, 248,corresponds to the number of magnetometer sensors placed on the human scalp. The number of columns, 35624, corresponds to the time steps of a recording.')
     print("----" * INDICES)
 
     print('In order to better understand and visualize the data you can use https://myhdf5.hdfgroup.org/')
-    print('Each file contains a part of the same dataset, for example rest_105923. You can imagine the .h5 file as a dictionary and all same-named files share the same key value.')
+    print('Each file contains a part of the same dataset, for example rest_105923.')
+    print('You can imagine the .h5 file as a dictionary and all same-named files share the same key value.')
     print("----" * INDICES)
 
 
@@ -273,13 +285,3 @@ def get_all_filenames(directory):
         >>> ['rest_105923_1.h5', 'rest_105923_2.h5', 'rest_105923_3.h5', 'rest_105923_4.h5', 'rest_105923_5.h5', 'rest_105923_6.h5', 'rest_105923_7.h5', 'rest_105923_8.h5', 'task_motor_105923_1.h5', 'task_motor_105923_2.h5', 'task_motor_105923_3.h5', 'task_motor_105923_4.h5', 'task_motor_105923_5.h5', 'task_motor_105923_6.h5', 'task_motor_105923_7.h5', 'task_motor_105923_8.h5', 'task_story_math_105923_1.h5', 'task_story_math_105923_2.h5', 'task_story_math_105923_3.h5', 'task_story_math_105923_4.h5', 'task_story_math_105923_5.h5', 'task_story_math_105923_6.h5', 'task_story_math_105923_7.h5', 'task_story_math_105923_8.h5', 'task_working_memory_105923_1.h5', 'task_working_memory_105923_2.h5', 'task_working_memory_105923_3.h5', 'task_working_memory_105923_4.h5', 'task_working_memory_105923_5.h5', 'task_working_memory_105923_6.h5', 'task_working_memory_105923_7.h5', 'task_working_memory_105923_8.h5']   
     """
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
-
-
-print_dataset_help()
-
-root = f"{DATA_PREFIX}/Intra/train/"
-all_files = get_all_filenames(root)
-for file_name in all_files:
-    dat = DataFile(filename=file_name, root_dir=root, downsample_rate=10)
-    print(dat.get_matrix().shape)
-    dat.remove()
