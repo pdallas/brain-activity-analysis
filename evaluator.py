@@ -9,11 +9,14 @@ parser.add_argument('--mode', required=True,
                     choices=['Intra', 'Cross'], help='Mode to run the script in')
 parser.add_argument('--downsample', type=int,
                     default=1, help='Downsample rate')
-
+parser.add_argument('--model', required=False,
+                    choices=['cnn', 'lstm', 'rnn'], default='cnn', help='Model to use')
 
 args = parser.parse_args()
 MODE: str = args.mode
 DOWNSAMPLE: int = args.downsample
+MODEL: str = args.model
+TAB_SIZE: int = 5
 
 # Load the scaler (created in cnn.py)
 SCALER = joblib.load(f"{MODE.lower()}_{DOWNSAMPLE}_scaler.pkl")
@@ -51,7 +54,8 @@ y_test = np.array(y_test)
 X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], X_test.shape[2])
 
 # Load the Keras model
-model = load_model(f"{MODE.lower()}_{DOWNSAMPLE}_cnn_model.h5")
+model = load_model(f"{MODE.lower()}_{DOWNSAMPLE}_{MODEL}_model.h5")
+print(f"{'--'*TAB_SIZE} {MODEL.upper()} model loaded {'--'*TAB_SIZE}")
 
 loss, accuracy = model.evaluate(X_test, y_test)
 
