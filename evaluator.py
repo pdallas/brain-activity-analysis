@@ -1,3 +1,6 @@
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 import argparse
 from data import *
 import joblib
@@ -61,3 +64,21 @@ loss, accuracy = model.evaluate(X_test, y_test)
 
 print(f"Validation Loss: {loss:.4f}")
 print(f"Validation Accuracy: {accuracy * 100:.2f}%")
+
+# create a confusion matrix
+
+y_pred = model.predict(X_test)
+y_pred = np.argmax(y_pred, axis=1)
+y_test = np.argmax(y_test, axis=1)
+# map the labels to the corresponding activities
+cm = confusion_matrix(y_test, y_pred)
+cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+plt.figure(figsize=(10, 10))
+labels = ['Resting', 'Math & Story', 'Working Memory', 'Motor']
+sns.heatmap(cm, annot=True, square=True, cmap=plt.cm.Blues,
+            xticklabels=labels, yticklabels=labels)
+plt.xlabel('Predicted label')
+plt.ylabel('True label')
+plt.title(f"{MODE} {MODEL.upper()} Confusion Matrix")
+plt.savefig(f"{MODE.lower()}_{DOWNSAMPLE}_{MODEL}_confusion_matrix.png")
+plt.show()

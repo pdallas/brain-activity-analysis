@@ -158,7 +158,7 @@ print(f"{'--'*TAB_SIZE} Model created {'--'*TAB_SIZE}")
 X_train.reshape(X_train.shape[0], X_train.shape[1], X_train.shape[2])
 
 # Fit our model -> Might want to create a peridical fitting code
-history = model.fit(X_train, y_train, epochs=1,
+history = model.fit(X_train, y_train, epochs=10,
                     batch_size=1, validation_split=0.25)
 print(f"{'--'*TAB_SIZE} Model fitted {'--'*TAB_SIZE}")
 
